@@ -4,15 +4,22 @@ import csv
 
 import time
 from functools import wraps
+
+#atividade 4
 def medir_tempo(func):
-    """Decorator que mede o tempo de execução de uma função."""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        inicio = time.perf_counter()  # tempo inicial (mais preciso que time.time)
+        inicio = time.perf_counter()
         resultado = func(*args, **kwargs)
-        fim = time.perf_counter()     # tempo final
+        fim = time.perf_counter()
         duracao = fim - inicio
-        print(f"⏱ Função '{func.__name__}' executada em {duracao:.6f} segundos.")
+
+        agora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        with open("log.txt", "a", encoding="utf-8") as log:
+            log.write(f"{agora} | {func.__name__} | {duracao:.6f} segundos\n")
+
+        print(f"{func.__name__}: {duracao:.6f} segundos")
         return resultado
     return wrapper
 
@@ -34,7 +41,6 @@ usuarios = Table(
 metadata.create_all(engine)
 
 #atividade 1
-@medir_tempo
 def LGPD(row):
     nome = row[1]
     partes = nome.split(" ")
