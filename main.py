@@ -1,21 +1,21 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, insert, text
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer
+from sqlalchemy import String, Date, DateTime, text
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
-import time
-from functools import wraps
-def medir_tempo(func):
-    """Decorator que mede o tempo de execução de uma função."""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        inicio = time.perf_counter()  # tempo inicial (mais preciso que time.time)
-        resultado = func(*args, **kwargs)
-        fim = time.perf_counter()     # tempo final
-        duracao = fim - inicio
-        print(f"⏱ Função '{func.__name__}' executada em {duracao:.6f} segundos.")
-        return resultado
-    return wrapper
+load_dotenv()
 
-engine = create_engine("postgresql+psycopg2://alunos:AlunoFatec@200.19.224.150:5432/atividade2", echo=False)
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+DB_PORT = os.getenv("DB_PORT")
+
+engine = create_engine(
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
+
 metadata = MetaData()
 
 usuarios = Table(
@@ -32,16 +32,43 @@ usuarios = Table(
 
 metadata.create_all(engine)
 
-@medir_tempo
 def LGPD(row):
-    return row
+    id, nome, cpf, email, telefone, data_nasc, created, updated = row
+
+    partes_nome = nome.split(" ")
+    primeiro_nome = partes_nome[0]
+    sobrenome = " ".join(partes_nome[1:]) if len(partes_nome) > 1 else ""
+
+    nome_anon = primeiro_nome[0] + "*" * (len(primeiro_nome) - 1)
+    if sobrenome:
+        nome_anon += " " + sobrenome
+
+    cpf_anon = cpf[:3] + ".***.***-**"
+
+    usuario, dominio = email.split("@")
+    email_anon = usuario[0] + "*" * (len(usuario) - 1) + "@" + dominio
+
+    telefone_anon = telefone[-4:]
+
+    return (
+        id,
+        nome_anon,
+        cpf_anon,
+        email_anon,
+        telefone_anon,
+        data_nasc,
+        created,
+        updated
+    )
 
 users = []
+
 with engine.connect() as conn:
-    result = conn.execute(text("SELECT * FROM usuarios LIMIT 5;"))
+    result = conn.execute(text("SELECT * FROM usuarios LIMIT 10;"))
+    
     for row in result:
         row = LGPD(row)
         users.append(row)
 
-for user in users:
-    print(user)
+for u in users:
+    print(u)
