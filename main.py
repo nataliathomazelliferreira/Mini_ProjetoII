@@ -85,6 +85,16 @@ def atividade2():
             writer = csv.writer(file)
             writer.writerows(registros)
 
+#atividade 3
+@medir_tempo
+def atividade3():
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT nome, cpf FROM usuarios"))
+
+        with open("todos.csv", "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerows(result)
+
 users = []
 with engine.connect() as conn:
     result = conn.execute(text("SELECT * FROM usuarios LIMIT 5;"))
@@ -96,3 +106,4 @@ for user in users:
     print(user)
 
 atividade2()
+atividade3()
