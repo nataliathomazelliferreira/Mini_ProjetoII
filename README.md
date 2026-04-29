@@ -58,8 +58,8 @@ Os resultados são registrados em um arquivo de log:
 ### 1. Clonar o repositório
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
-cd <NOME_DO_PROJETO>
+git clone https://github.com/nataliathomazelliferreira/Mini_ProjetoII.git
+cd Mini_ProjetoII
 ````
 
 ### 2. Criar ambiente virtual
