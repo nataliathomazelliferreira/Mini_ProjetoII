@@ -1,4 +1,4 @@
-# Projeto LGPD com Python e SQLAlchemy
+# Projeto LGPD
 
 ## Descrição
 
