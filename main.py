@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, insert, text
 from datetime import datetime
+import csv
 
 import time
 from functools import wraps
@@ -32,6 +33,7 @@ usuarios = Table(
 
 metadata.create_all(engine)
 
+#atividade 1
 @medir_tempo
 def LGPD(row):
     nome = row[1]
@@ -63,6 +65,25 @@ def LGPD(row):
         row[6],
         row[7]
     )
+#atividade 2
+@medir_tempo
+def atividade2():
+    dados_por_ano = {}
+
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT * FROM usuarios"))
+        for row in result:
+            ano = row[5].year
+
+            if ano not in dados_por_ano:
+                dados_por_ano[ano] = []
+
+            dados_por_ano[ano].append(LGPD(row))
+
+    for ano, registros in dados_por_ano.items():
+        with open(f"{ano}.csv", "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerows(registros)
 
 users = []
 with engine.connect() as conn:
@@ -73,3 +94,5 @@ with engine.connect() as conn:
 
 for user in users:
     print(user)
+
+atividade2()
