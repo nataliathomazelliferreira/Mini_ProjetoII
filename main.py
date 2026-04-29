@@ -1,21 +1,22 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer
-from sqlalchemy import String, Date, DateTime, text
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, text
 from datetime import datetime
-import os
-from dotenv import load_dotenv
+import time
+from functools import wraps
 
-load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
-DB_PORT = os.getenv("DB_PORT")
+def medir_tempo(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        inicio = time.perf_counter()
+        resultado = func(*args, **kwargs)
+        fim = time.perf_counter()
+        duracao = fim - inicio
+        print(f"Função '{func.__name__}' executada em {duracao:.6f} segundos.")
+        return resultado
+    return wrapper
 
-engine = create_engine(
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
 
+engine = create_engine("postgresql+psycopg2://alunos:AlunoFatec@200.19.224.150:5432/atividade2", echo=False)
 metadata = MetaData()
 
 usuarios = Table(
@@ -32,43 +33,46 @@ usuarios = Table(
 
 metadata.create_all(engine)
 
+
+def anonimizar_nome(nome):
+    partes = nome.split()
+    return ' '.join(p[0] + '*' * (len(p) - 1) for p in partes)
+
+
+def anonimizar_cpf(cpf):
+    return cpf[:4] + '*' * (len(cpf) - 4)
+
+
+def anonimizar_email(email):
+    usuario, dominio = email.split('@')
+    return usuario[0] + '*' * (len(usuario) - 1) + '@' + dominio
+
+
+def anonimizar_telefone(telefone):
+    digitos = ''.join(filter(str.isdigit, telefone))
+    return digitos[-4:]
+
+
+@medir_tempo
 def LGPD(row):
-    id, nome, cpf, email, telefone, data_nasc, created, updated = row
-
-    partes_nome = nome.split(" ")
-    primeiro_nome = partes_nome[0]
-    sobrenome = " ".join(partes_nome[1:]) if len(partes_nome) > 1 else ""
-
-    nome_anon = primeiro_nome[0] + "*" * (len(primeiro_nome) - 1)
-    if sobrenome:
-        nome_anon += " " + sobrenome
-
-    cpf_anon = cpf[:3] + ".***.***-**"
-
-    usuario, dominio = email.split("@")
-    email_anon = usuario[0] + "*" * (len(usuario) - 1) + "@" + dominio
-
-    telefone_anon = telefone[-4:]
-
+    id_, nome, cpf, email, telefone, data_nascimento, created_on, updated_on = row
     return (
-        id,
-        nome_anon,
-        cpf_anon,
-        email_anon,
-        telefone_anon,
-        data_nasc,
-        created,
-        updated
+        id_,
+        anonimizar_nome(nome),
+        anonimizar_cpf(cpf),
+        anonimizar_email(email),
+        anonimizar_telefone(telefone),
+        data_nascimento,
+        created_on,
+        updated_on
     )
 
 users = []
-
 with engine.connect() as conn:
-    result = conn.execute(text("SELECT * FROM usuarios LIMIT 10;"))
-    
+    result = conn.execute(text("SELECT * FROM usuarios LIMIT 5;"))
     for row in result:
         row = LGPD(row)
         users.append(row)
 
-for u in users:
-    print(u)
+for user in users:
+    print(user)
