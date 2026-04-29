@@ -1,7 +1,10 @@
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Date, DateTime, insert, text
 from datetime import datetime
 import csv
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 import time
 from functools import wraps
 
@@ -23,7 +26,7 @@ def medir_tempo(func):
         return resultado
     return wrapper
 
-engine = create_engine("postgresql+psycopg2://alunos:AlunoFatec@200.19.224.150:5432/atividade2", echo=False)
+engine = create_engine(os.getenv("DATABASE_URL"), echo=False)
 metadata = MetaData()
 
 usuarios = Table(
